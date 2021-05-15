@@ -20,12 +20,10 @@ userController.createUser = async (req, res) => {
     const savedUser = await newUser.save();
 
     return res.json({
-      success: true,
       message: `${savedUser.email} was successfuly registered`,
     });
   } catch (error) {
     return res.json({
-      success: false,
       message: "Error creating user. Try again",
       error,
     });
@@ -36,12 +34,12 @@ userController.createUser = async (req, res) => {
 userController.login = async (req, res, next) => {
   passport.authenticate("local", (err, user, info) => {
     if (err) throw err;
-    if (!user) return res.json({ success: false, info });
+    if (!user) return res.json({ info });
 
     req.logIn(user, (err) => {
       if (err) throw err;
 
-      res.json({ success: true, info });
+      res.json({ info });
     });
   })(req, res, next);
 };
@@ -49,11 +47,28 @@ userController.login = async (req, res, next) => {
 // logout
 userController.logout = async (req, res) => {
   try {
-    req.logout();
-    res.json({ success: true, message: "See you soon" });
+    if (req.isAuthenticated()) {
+      req.logout();
+      return res.json({ message: "See you soon" });
+    }
+
+    return res.json({ message: "You are not logged" });
   } catch (error) {
-    res.json({ success: false, message: "Logout error", error });
+    res.json({ message: "Logout error", error });
   }
 };
 
+// verify cookie
+userController.checkCookieUser = async (req, res, next) => {
+  if (req.user && req.isAuthenticated())
+    return res.json({
+      message: `${req.user.email} is logged in`,
+      logged: true,
+      email: req.user.email,
+    });
+
+  return res.json({ message: "No user logged", logged: false, email: null });
+};
+
+// export
 module.exports = userController;

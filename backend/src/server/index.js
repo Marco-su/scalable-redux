@@ -1,5 +1,6 @@
 const cors = require("cors");
 const express = require("express");
+const session = require("express-session");
 const cookieParser = require("cookie-parser");
 const passport = require("passport");
 const userRoutes = require("../routes/user.routes");
@@ -14,6 +15,14 @@ app.use(
   cors({
     origin: "http://localhost:3000",
     credentials: true,
+  })
+);
+
+app.use(
+  session({
+    secret: process.env.COOKIE_SECRET || "secret",
+    saveUninitialized: true,
+    resave: true,
   })
 );
 

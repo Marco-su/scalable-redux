@@ -11,17 +11,21 @@ module.exports = function (passport) {
 
       async (email, password, done) => {
         try {
-          const userFound = await User.findOne({ email });
-          if (!userFound) return done(null, false, { message: "Wrong email" });
+          const user = await User.findOne({ email });
+          if (!user)
+            return done(null, false, {
+              message: "Wrong email",
+            });
 
-          const match = await User.comparePasswords(
-            password,
-            userFound.password
-          );
-          if (!match) return done(null, false, { message: "Wrong password" });
+          const match = await User.comparePasswords(password, user.password);
+          if (!match)
+            return done(null, false, {
+              message: "Wrong password",
+            });
 
-          return done(null, userFound, {
+          return done(null, user, {
             message: "Successfuly authentication",
+            email: user.email,
           });
         } catch (error) {
           return done(error, false, {
@@ -33,20 +37,22 @@ module.exports = function (passport) {
   );
 
   passport.serializeUser((user, done) => {
-    done(null, user.id);
+    done(null, user._id);
   });
 
   passport.deserializeUser(async (id, done) => {
     try {
-      const foundUser = await User.findOne({ _id: id }, { _id: 1 });
+      const user = await User.findOne({ _id: id });
 
-      if (foundUser) {
-        const userInfo = { id: foundUser._id };
+      if (user) {
+        delete user.password;
+        const userInfo = { id: user._id, email: user.email };
         return done(null, userInfo);
       }
 
       return done(null, false, { message: "Deserialize fail" });
     } catch (error) {
+      console.log(error);
       return done(error, false, { message: "Deserialize error" });
     }
   });
